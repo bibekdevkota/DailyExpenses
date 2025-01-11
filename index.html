@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Expenses Tracker</title>
+    <title>Daily Income and Expense Tracker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -12,21 +12,28 @@
         .container {
             margin-top: 50px;
         }
-        .task-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .completed {
-            text-decoration: line-through;
-            color: #6c757d;
-        }
-        .amount {
-            margin-left: 15px;
-            font-weight: bold;
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .table-container {
             margin-top: 20px;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+        }
+        td {
+            text-align: center;
+        }
+        .total-section {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .total-section h4 {
+            margin: 0;
         }
     </style>
 </head>
@@ -37,17 +44,21 @@
         <div class="card shadow">
             <div class="card-body">
                 <form id="task-form" class="mb-4">
-                    <div class="input-group mb-3">
-                        <input type="text" id="task-input" class="form-control" placeholder="Enter category">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <input type="date" id="date-input" class="form-control" placeholder="Date">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" id="task-input" class="form-control" placeholder="Category">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" id="subcategory-input" class="form-control" placeholder="Subcategory">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" id="amount-input" class="form-control" placeholder="Amount (positive for income, negative for expense)">
+                        </div>
                     </div>
-                    <div class="input-group mb-3">
-                        <input type="text" id="subcategory-input" class="form-control" placeholder="Enter subcategory">
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="date" id="date-input" class="form-control">
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="amount-input" class="form-control" placeholder="Enter amount (positive for income, negative for expense)">
+                    <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary">Add Entry</button>
                     </div>
                 </form>
@@ -67,7 +78,10 @@
                             <!-- Dynamic entries will be added here -->
                         </tbody>
                     </table>
-                    <h4 class="text-end mt-3">Total: <span id="total-amount">0</span></h4>
+                </div>
+
+                <div class="total-section text-end mt-4">
+                    <h4>Total: <span id="total-amount">0</span></h4>
                 </div>
             </div>
         </div>
@@ -82,30 +96,27 @@
         const taskList = document.getElementById('task-list');
         const totalAmount = document.getElementById('total-amount');
 
-        // Load tasks from local storage
         function loadTasks() {
             const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
             tasks.forEach(task => {
-                addTask(task.category, task.subcategory, task.date, task.amount, task.completed);
+                addTaskToTable(task.date, task.category, task.subcategory, task.amount);
             });
             updateTotal();
         }
 
-        // Save tasks to local storage
         function saveTasks() {
             const tasks = [];
-            document.querySelectorAll('.task-item').forEach(taskItem => {
+            document.querySelectorAll('.task-row').forEach(row => {
                 tasks.push({
-                    category: taskItem.querySelector('.task-category').textContent,
-                    subcategory: taskItem.querySelector('.task-subcategory').textContent,
-                    date: taskItem.querySelector('.task-date').textContent,
-                    amount: parseFloat(taskItem.querySelector('.task-amount').textContent),
+                    date: row.querySelector('.task-date').textContent,
+                    category: row.querySelector('.task-category').textContent,
+                    subcategory: row.querySelector('.task-subcategory').textContent,
+                    amount: parseFloat(row.querySelector('.task-amount').textContent),
                 });
             });
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
-        // Update total amount
         function updateTotal() {
             let total = 0;
             document.querySelectorAll('.task-amount').forEach(amountSpan => {
@@ -114,10 +125,9 @@
             totalAmount.textContent = total.toFixed(2);
         }
 
-        // Function to add a task
-        function addTask(category, subcategory, date, amount) {
-            const taskRow = document.createElement('tr');
-            taskRow.className = 'task-item';
+        function addTaskToTable(date, category, subcategory, amount) {
+            const row = document.createElement('tr');
+            row.className = 'task-row';
 
             const dateCell = document.createElement('td');
             dateCell.className = 'task-date';
@@ -141,15 +151,17 @@
             editButton.className = 'btn btn-warning btn-sm me-2';
             editButton.textContent = 'Edit';
             editButton.onclick = () => {
+                const newDate = prompt('Edit Date:', dateCell.textContent);
                 const newCategory = prompt('Edit Category:', categoryCell.textContent);
                 const newSubcategory = prompt('Edit Subcategory:', subcategoryCell.textContent);
-                const newDate = prompt('Edit Date (YYYY-MM-DD):', dateCell.textContent);
                 const newAmount = parseFloat(prompt('Edit Amount:', amountCell.textContent));
-                if (newCategory !== null && newSubcategory !== null && newDate !== null && !isNaN(newAmount)) {
+
+                if (newDate && newCategory && newSubcategory && !isNaN(newAmount)) {
+                    dateCell.textContent = newDate;
                     categoryCell.textContent = newCategory;
                     subcategoryCell.textContent = newSubcategory;
-                    dateCell.textContent = newDate;
                     amountCell.textContent = newAmount;
+
                     saveTasks();
                     updateTotal();
                 }
@@ -159,7 +171,7 @@
             deleteButton.className = 'btn btn-danger btn-sm';
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = () => {
-                taskRow.remove();
+                row.remove();
                 saveTasks();
                 updateTotal();
             };
@@ -167,34 +179,34 @@
             actionsCell.appendChild(editButton);
             actionsCell.appendChild(deleteButton);
 
-            taskRow.appendChild(dateCell);
-            taskRow.appendChild(categoryCell);
-            taskRow.appendChild(subcategoryCell);
-            taskRow.appendChild(amountCell);
-            taskRow.appendChild(actionsCell);
+            row.appendChild(dateCell);
+            row.appendChild(categoryCell);
+            row.appendChild(subcategoryCell);
+            row.appendChild(amountCell);
+            row.appendChild(actionsCell);
 
-            taskList.appendChild(taskRow);
+            taskList.appendChild(row);
             saveTasks();
             updateTotal();
         }
 
-        // Handle form submission
         taskForm.addEventListener('submit', (event) => {
             event.preventDefault();
+            const date = dateInput.value;
             const category = taskInput.value.trim();
             const subcategory = subcategoryInput.value.trim();
-            const date = dateInput.value.trim();
             const amount = parseFloat(amountInput.value.trim());
-            if (category && subcategory && date && !isNaN(amount)) {
-                addTask(category, subcategory, date, amount);
+
+            if (date && category && subcategory && !isNaN(amount)) {
+                addTaskToTable(date, category, subcategory, amount);
+
+                dateInput.value = '';
                 taskInput.value = '';
                 subcategoryInput.value = '';
-                dateInput.value = '';
                 amountInput.value = '';
             }
         });
 
-        // Load tasks on page load
         window.addEventListener('DOMContentLoaded', loadTasks);
     </script>
 

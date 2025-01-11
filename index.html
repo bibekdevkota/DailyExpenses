@@ -48,13 +48,36 @@
         const taskInput = document.getElementById('task-input');
         const taskList = document.getElementById('task-list');
 
+        // Load tasks from local storage
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.forEach(task => {
+                addTask(task.text, task.completed);
+            });
+        }
+
+        // Save tasks to local storage
+        function saveTasks() {
+            const tasks = [];
+            document.querySelectorAll('.task-item').forEach(taskItem => {
+                tasks.push({
+                    text: taskItem.querySelector('span').textContent,
+                    completed: taskItem.querySelector('span').classList.contains('completed')
+                });
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
         // Function to add a task
-        function addTask(taskText) {
+        function addTask(taskText, isCompleted = false) {
             const taskItem = document.createElement('li');
             taskItem.className = 'list-group-item task-item';
 
             const taskContent = document.createElement('span');
             taskContent.textContent = taskText;
+            if (isCompleted) {
+                taskContent.classList.add('completed');
+            }
 
             const actionButtons = document.createElement('div');
 
@@ -63,6 +86,7 @@
             completeButton.textContent = 'Complete';
             completeButton.onclick = () => {
                 taskContent.classList.toggle('completed');
+                saveTasks();
             };
 
             const deleteButton = document.createElement('button');
@@ -70,6 +94,7 @@
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = () => {
                 taskItem.remove();
+                saveTasks();
             };
 
             actionButtons.appendChild(completeButton);
@@ -79,6 +104,7 @@
             taskItem.appendChild(actionButtons);
 
             taskList.appendChild(taskItem);
+            saveTasks();
         }
 
         // Handle form submission
@@ -90,6 +116,9 @@
                 taskInput.value = '';
             }
         });
+
+        // Load tasks on page load
+        window.addEventListener('DOMContentLoaded', loadTasks);
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

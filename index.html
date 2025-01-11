@@ -21,6 +21,10 @@
             text-decoration: line-through;
             color: #6c757d;
         }
+        .amount {
+            margin-left: 15px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -30,8 +34,11 @@
         <div class="card shadow">
             <div class="card-body">
                 <form id="task-form" class="mb-4">
-                    <div class="input-group">
+                    <div class="input-group mb-3">
                         <input type="text" id="task-input" class="form-control" placeholder="Enter task or expense">
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="amount-input" class="form-control" placeholder="Enter amount (positive for Cr, negative for Dr)">
                         <button type="submit" class="btn btn-primary">Add Task</button>
                     </div>
                 </form>
@@ -46,13 +53,14 @@
     <script>
         const taskForm = document.getElementById('task-form');
         const taskInput = document.getElementById('task-input');
+        const amountInput = document.getElementById('amount-input');
         const taskList = document.getElementById('task-list');
 
         // Load tasks from local storage
         function loadTasks() {
             const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
             tasks.forEach(task => {
-                addTask(task.text, task.completed);
+                addTask(task.text, task.amount, task.completed);
             });
         }
 
@@ -61,23 +69,29 @@
             const tasks = [];
             document.querySelectorAll('.task-item').forEach(taskItem => {
                 tasks.push({
-                    text: taskItem.querySelector('span').textContent,
-                    completed: taskItem.querySelector('span').classList.contains('completed')
+                    text: taskItem.querySelector('.task-text').textContent,
+                    amount: parseFloat(taskItem.querySelector('.amount').textContent),
+                    completed: taskItem.querySelector('.task-text').classList.contains('completed')
                 });
             });
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
         // Function to add a task
-        function addTask(taskText, isCompleted = false) {
+        function addTask(taskText, amount, isCompleted = false) {
             const taskItem = document.createElement('li');
             taskItem.className = 'list-group-item task-item';
 
             const taskContent = document.createElement('span');
+            taskContent.className = 'task-text';
             taskContent.textContent = taskText;
             if (isCompleted) {
                 taskContent.classList.add('completed');
             }
+
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'amount';
+            amountSpan.textContent = amount;
 
             const actionButtons = document.createElement('div');
 
@@ -101,6 +115,7 @@
             actionButtons.appendChild(deleteButton);
 
             taskItem.appendChild(taskContent);
+            taskItem.appendChild(amountSpan);
             taskItem.appendChild(actionButtons);
 
             taskList.appendChild(taskItem);
@@ -111,9 +126,11 @@
         taskForm.addEventListener('submit', (event) => {
             event.preventDefault();
             const taskText = taskInput.value.trim();
-            if (taskText) {
-                addTask(taskText);
+            const amount = parseFloat(amountInput.value.trim());
+            if (taskText && !isNaN(amount)) {
+                addTask(taskText, amount);
                 taskInput.value = '';
+                amountInput.value = '';
             }
         });
 

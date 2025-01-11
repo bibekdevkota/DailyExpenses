@@ -103,6 +103,19 @@
                 saveTasks();
             };
 
+            const editButton = document.createElement('button');
+            editButton.className = 'btn btn-warning btn-sm me-2';
+            editButton.textContent = 'Edit';
+            editButton.onclick = () => {
+                const newTaskText = prompt('Edit Task:', taskContent.textContent);
+                const newAmount = parseFloat(prompt('Edit Amount:', amountSpan.textContent));
+                if (newTaskText !== null && !isNaN(newAmount)) {
+                    taskContent.textContent = newTaskText;
+                    amountSpan.textContent = newAmount;
+                    saveTasks();
+                }
+            };
+
             const deleteButton = document.createElement('button');
             deleteButton.className = 'btn btn-danger btn-sm';
             deleteButton.textContent = 'Delete';
@@ -112,6 +125,7 @@
             };
 
             actionButtons.appendChild(completeButton);
+            actionButtons.appendChild(editButton);
             actionButtons.appendChild(deleteButton);
 
             taskItem.appendChild(taskContent);

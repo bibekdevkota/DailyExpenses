@@ -37,6 +37,9 @@
                     <div class="input-group mb-3">
                         <input type="text" id="task-input" class="form-control" placeholder="Enter task or expense">
                     </div>
+                    <div class="input-group mb-3">
+                        <input type="date" id="date-input" class="form-control" placeholder="Enter purchase date">
+                    </div>
                     <div class="input-group">
                         <input type="number" id="amount-input" class="form-control" placeholder="Enter amount (positive for Cr, negative for Dr)">
                         <button type="submit" class="btn btn-primary">Add Task</button>
@@ -53,6 +56,7 @@
     <script>
         const taskForm = document.getElementById('task-form');
         const taskInput = document.getElementById('task-input');
+        const dateInput = document.getElementById('date-input');
         const amountInput = document.getElementById('amount-input');
         const taskList = document.getElementById('task-list');
 
@@ -60,7 +64,7 @@
         function loadTasks() {
             const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
             tasks.forEach(task => {
-                addTask(task.text, task.amount, task.completed);
+                addTask(task.text, task.date, task.amount, task.completed);
             });
         }
 
@@ -70,6 +74,7 @@
             document.querySelectorAll('.task-item').forEach(taskItem => {
                 tasks.push({
                     text: taskItem.querySelector('.task-text').textContent,
+                    date: taskItem.querySelector('.task-date').textContent,
                     amount: parseFloat(taskItem.querySelector('.amount').textContent),
                     completed: taskItem.querySelector('.task-text').classList.contains('completed')
                 });
@@ -78,7 +83,7 @@
         }
 
         // Function to add a task
-        function addTask(taskText, amount, isCompleted = false) {
+        function addTask(taskText, date, amount, isCompleted = false) {
             const taskItem = document.createElement('li');
             taskItem.className = 'list-group-item task-item';
 
@@ -88,6 +93,10 @@
             if (isCompleted) {
                 taskContent.classList.add('completed');
             }
+
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'task-date';
+            dateSpan.textContent = date;
 
             const amountSpan = document.createElement('span');
             amountSpan.className = 'amount';
@@ -108,9 +117,11 @@
             editButton.textContent = 'Edit';
             editButton.onclick = () => {
                 const newTaskText = prompt('Edit Task:', taskContent.textContent);
+                const newDate = prompt('Edit Date (YYYY-MM-DD):', dateSpan.textContent);
                 const newAmount = parseFloat(prompt('Edit Amount:', amountSpan.textContent));
-                if (newTaskText !== null && !isNaN(newAmount)) {
+                if (newTaskText !== null && newDate !== null && !isNaN(newAmount)) {
                     taskContent.textContent = newTaskText;
+                    dateSpan.textContent = newDate;
                     amountSpan.textContent = newAmount;
                     saveTasks();
                 }
@@ -129,6 +140,7 @@
             actionButtons.appendChild(deleteButton);
 
             taskItem.appendChild(taskContent);
+            taskItem.appendChild(dateSpan);
             taskItem.appendChild(amountSpan);
             taskItem.appendChild(actionButtons);
 
@@ -140,10 +152,12 @@
         taskForm.addEventListener('submit', (event) => {
             event.preventDefault();
             const taskText = taskInput.value.trim();
+            const date = dateInput.value.trim();
             const amount = parseFloat(amountInput.value.trim());
-            if (taskText && !isNaN(amount)) {
-                addTask(taskText, amount);
+            if (taskText && date && !isNaN(amount)) {
+                addTask(taskText, date, amount);
                 taskInput.value = '';
+                dateInput.value = '';
                 amountInput.value = '';
             }
         });

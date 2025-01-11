@@ -10,7 +10,7 @@
             background-color: #f8f9fa;
         }
         .container {
-            margin-top: 51px;
+            margin-top: 50px;
         }
         .task-item {
             display: flex;
@@ -25,30 +25,50 @@
             margin-left: 15px;
             font-weight: bold;
         }
+        .table-container {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">Daily Expenses Tracker</h1>
+        <h1 class="text-center mb-4">Daily Income and Expense Tracker</h1>
 
         <div class="card shadow">
             <div class="card-body">
                 <form id="task-form" class="mb-4">
                     <div class="input-group mb-3">
-                        <input type="text" id="task-input" class="form-control" placeholder="Enter task or expense">
+                        <input type="text" id="task-input" class="form-control" placeholder="Enter category">
                     </div>
                     <div class="input-group mb-3">
-                        <input type="date" id="date-input" class="form-control" placeholder="Enter purchase date">
+                        <input type="text" id="subcategory-input" class="form-control" placeholder="Enter subcategory">
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="date" id="date-input" class="form-control">
                     </div>
                     <div class="input-group">
-                        <input type="number" id="amount-input" class="form-control" placeholder="Enter amount (positive for Cr, negative for Dr)">
-                        <button type="submit" class="btn btn-primary">Add Task</button>
+                        <input type="number" id="amount-input" class="form-control" placeholder="Enter amount (positive for income, negative for expense)">
+                        <button type="submit" class="btn btn-primary">Add Entry</button>
                     </div>
                 </form>
 
-                <ul id="task-list" class="list-group">
-                    <!-- Dynamic tasks will be added here -->
-                </ul>
+                <div class="table-container">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Subcategory</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-list">
+                            <!-- Dynamic entries will be added here -->
+                        </tbody>
+                    </table>
+                    <h4 class="text-end mt-3">Total: <span id="total-amount">0</span></h4>
+                </div>
             </div>
         </div>
     </div>
@@ -56,16 +76,19 @@
     <script>
         const taskForm = document.getElementById('task-form');
         const taskInput = document.getElementById('task-input');
+        const subcategoryInput = document.getElementById('subcategory-input');
         const dateInput = document.getElementById('date-input');
         const amountInput = document.getElementById('amount-input');
         const taskList = document.getElementById('task-list');
+        const totalAmount = document.getElementById('total-amount');
 
         // Load tasks from local storage
         function loadTasks() {
             const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
             tasks.forEach(task => {
-                addTask(task.text, task.date, task.amount, task.completed);
+                addTask(task.category, task.subcategory, task.date, task.amount, task.completed);
             });
+            updateTotal();
         }
 
         // Save tasks to local storage
@@ -73,57 +96,62 @@
             const tasks = [];
             document.querySelectorAll('.task-item').forEach(taskItem => {
                 tasks.push({
-                    text: taskItem.querySelector('.task-text').textContent,
+                    category: taskItem.querySelector('.task-category').textContent,
+                    subcategory: taskItem.querySelector('.task-subcategory').textContent,
                     date: taskItem.querySelector('.task-date').textContent,
-                    amount: parseFloat(taskItem.querySelector('.amount').textContent),
-                    completed: taskItem.querySelector('.task-text').classList.contains('completed')
+                    amount: parseFloat(taskItem.querySelector('.task-amount').textContent),
                 });
             });
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
+        // Update total amount
+        function updateTotal() {
+            let total = 0;
+            document.querySelectorAll('.task-amount').forEach(amountSpan => {
+                total += parseFloat(amountSpan.textContent);
+            });
+            totalAmount.textContent = total.toFixed(2);
+        }
+
         // Function to add a task
-        function addTask(taskText, date, amount, isCompleted = false) {
-            const taskItem = document.createElement('li');
-            taskItem.className = 'list-group-item task-item';
+        function addTask(category, subcategory, date, amount) {
+            const taskRow = document.createElement('tr');
+            taskRow.className = 'task-item';
 
-            const taskContent = document.createElement('span');
-            taskContent.className = 'task-text';
-            taskContent.textContent = taskText;
-            if (isCompleted) {
-                taskContent.classList.add('completed');
-            }
+            const dateCell = document.createElement('td');
+            dateCell.className = 'task-date';
+            dateCell.textContent = date;
 
-            const dateSpan = document.createElement('span');
-            dateSpan.className = 'task-date';
-            dateSpan.textContent = date;
+            const categoryCell = document.createElement('td');
+            categoryCell.className = 'task-category';
+            categoryCell.textContent = category;
 
-            const amountSpan = document.createElement('span');
-            amountSpan.className = 'amount';
-            amountSpan.textContent = amount;
+            const subcategoryCell = document.createElement('td');
+            subcategoryCell.className = 'task-subcategory';
+            subcategoryCell.textContent = subcategory;
 
-            const actionButtons = document.createElement('div');
+            const amountCell = document.createElement('td');
+            amountCell.className = 'task-amount';
+            amountCell.textContent = amount;
 
-            const completeButton = document.createElement('button');
-            completeButton.className = 'btn btn-success btn-sm me-2';
-            completeButton.textContent = 'Complete';
-            completeButton.onclick = () => {
-                taskContent.classList.toggle('completed');
-                saveTasks();
-            };
+            const actionsCell = document.createElement('td');
 
             const editButton = document.createElement('button');
             editButton.className = 'btn btn-warning btn-sm me-2';
             editButton.textContent = 'Edit';
             editButton.onclick = () => {
-                const newTaskText = prompt('Edit Task:', taskContent.textContent);
-                const newDate = prompt('Edit Date (YYYY-MM-DD):', dateSpan.textContent);
-                const newAmount = parseFloat(prompt('Edit Amount:', amountSpan.textContent));
-                if (newTaskText !== null && newDate !== null && !isNaN(newAmount)) {
-                    taskContent.textContent = newTaskText;
-                    dateSpan.textContent = newDate;
-                    amountSpan.textContent = newAmount;
+                const newCategory = prompt('Edit Category:', categoryCell.textContent);
+                const newSubcategory = prompt('Edit Subcategory:', subcategoryCell.textContent);
+                const newDate = prompt('Edit Date (YYYY-MM-DD):', dateCell.textContent);
+                const newAmount = parseFloat(prompt('Edit Amount:', amountCell.textContent));
+                if (newCategory !== null && newSubcategory !== null && newDate !== null && !isNaN(newAmount)) {
+                    categoryCell.textContent = newCategory;
+                    subcategoryCell.textContent = newSubcategory;
+                    dateCell.textContent = newDate;
+                    amountCell.textContent = newAmount;
                     saveTasks();
+                    updateTotal();
                 }
             };
 
@@ -131,32 +159,36 @@
             deleteButton.className = 'btn btn-danger btn-sm';
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = () => {
-                taskItem.remove();
+                taskRow.remove();
                 saveTasks();
+                updateTotal();
             };
 
-            actionButtons.appendChild(completeButton);
-            actionButtons.appendChild(editButton);
-            actionButtons.appendChild(deleteButton);
+            actionsCell.appendChild(editButton);
+            actionsCell.appendChild(deleteButton);
 
-            taskItem.appendChild(taskContent);
-            taskItem.appendChild(dateSpan);
-            taskItem.appendChild(amountSpan);
-            taskItem.appendChild(actionButtons);
+            taskRow.appendChild(dateCell);
+            taskRow.appendChild(categoryCell);
+            taskRow.appendChild(subcategoryCell);
+            taskRow.appendChild(amountCell);
+            taskRow.appendChild(actionsCell);
 
-            taskList.appendChild(taskItem);
+            taskList.appendChild(taskRow);
             saveTasks();
+            updateTotal();
         }
 
         // Handle form submission
         taskForm.addEventListener('submit', (event) => {
             event.preventDefault();
-            const taskText = taskInput.value.trim();
+            const category = taskInput.value.trim();
+            const subcategory = subcategoryInput.value.trim();
             const date = dateInput.value.trim();
             const amount = parseFloat(amountInput.value.trim());
-            if (taskText && date && !isNaN(amount)) {
-                addTask(taskText, date, amount);
+            if (category && subcategory && date && !isNaN(amount)) {
+                addTask(category, subcategory, date, amount);
                 taskInput.value = '';
+                subcategoryInput.value = '';
                 dateInput.value = '';
                 amountInput.value = '';
             }
